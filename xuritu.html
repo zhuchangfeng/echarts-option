@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>ECharts 下钻饼状图示例</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.1/dist/echarts.min.js"></script>
+</head>
+
+<body>
+  <div id="main" style="width: 1000px; height: 600px;"></div>
+
+  <script>
+    var currentIndex = 0;
+    var data = [{
+      value: 335,
+      name: '直接访问',
+      itemStyle: {
+        color: '#f99e1c'
+      },
+
+      children: [{
+        value: 115,
+        name: '邮件营销',
+
+        children: [{
+          value: 75,
+          name: '开发者',
+
+        }, {
+          value: 40,
+          name: '产品经理',
+
+        }]
+      }, {
+        value: 220,
+        name: '联盟广告',
+
+        children: [{
+          value: 120,
+          name: '视频广告',
+          children: []
+        }, {
+          value: 100,
+          name: '百度联盟',
+          children: []
+        }]
+      }]
+    }, {
+      value: 679,
+      name: '搜索引擎',
+      children: [{
+        value: 300,
+        name: '百度',
+        children: [
+          {
+            value: 100,
+            name: '开发者',
+
+          }, {
+            value: 200,
+            name: '产品经理',
+
+          }
+        ]
+      }, {
+        value: 200,
+        name: '谷歌',
+        children: [
+          {
+            value: 100,
+            name: '开发者',
+
+          }, {
+            value: 100,
+            name: '产品经理',
+
+          }
+        ]
+      }, {
+        value: 179,
+        name: '必应',
+        children: [
+          {
+            value: 79,
+            name: '开发者',
+
+          }, {
+            value: 100,
+            name: '产品经理',
+
+          }
+        ]
+      }]
+    }];
+    let color = [['#67c23a', '#a0cf86', '#c2e7b0'], ['#409eff', '#73b2f8']]
+    let colorObj = {}
+    /**
+     * 获取树形数组的最大层数
+     * @param {Array} treeArray - 树形数组
+     * @returns {number} 最大层数
+     */
+    function getMaxDepth(treeArray) {
+      // 如果输入不是数组或数组为空,返回0
+      if (!Array.isArray(treeArray) || treeArray.length === 0) {
+        return 0;
+      }
+
+      // 初始化最大层数为1
+      let maxDepth = 1;
+
+      // 遍历数组中的每个元素
+      for (let i = 0; i < treeArray.length; i++) {
+        const item = treeArray[i];
+
+        // 如果当前元素有子节点数组,则递归计算子节点的最大层数
+        if (item.children && item.children.length > 0) {
+          const childDepth = getMaxDepth(item.children) + 1;
+          maxDepth = Math.max(maxDepth, childDepth);
+        }
+      }
+
+      return maxDepth;
+    }
+    // 递归函数,为每个节点添加索引
+    function addIndex(data, parentIndex = []) {
+      return data.map((item, index) => {
+        const currentIndex = [...parentIndex, index];
+        const newItem = { ...item, index: currentIndex };
+        if (item.children && item.children.length > 0) {
+          newItem.children = addIndex(item.children, currentIndex);
+        }
+        let colortext = color[newItem.index[0]][newItem.index.length - 1];
+        if (color) {
+          newItem.itemStyle = {
+            color: colortext,
+          }
+          colorObj[newItem.name] = colortext
+        }
+        return newItem;
+      });
+    }
+    let maxlen = getMaxDepth(data)
+    let maxLenArr = data.map(_ => {
+      return getMaxDepth([_])
+    })
+    function setLevels(len) {
+      return Array.from({ length: len }, (v, i) => {
+        if (!i) {
+          return {  //第一层表示,点击后中间空白圆圈的样式,即返回圆圈
+
+            itemStyle: {
+              color: 'white'
+            },
+            emphasis: {
+              itemStyle: {
+                color: 'white'
+              }
+            },
+          }
+        } else {
+          return i + 1 == len ?
+            {
+              label: {
+                position: 'outside',
+                distance: 40,
+              },
+              labelLine: {
+                show: true,
+                length2: 20,
+              },
+
+            } : {
+              itemStyle: {
+                color: 'white'
+              },
+              label: {
+                color: 'white'
+              },
+            }
+        }
+      })
+    }
+    var option = {
+      // tooltip: {
+      //   trigger: 'item',
+      //   formatter: (params) => {
+      //     let { treePathInfo } = params
+      //     if (treePathInfo.length == 1) return ''
+      //     return treePathInfo.reduce((text, _) => {
+      //       text = _.name ? text + _.name + '<br/>' : ''
+      //       return text
+      //     }, '')
+      //   }
+      // },
+      tooltip: {
+        show: true,
+        formatter: (params) => {
+          let { treePathInfo } = params
+          if (treePathInfo.length == 1) return ''
+          return `${treePathInfo.reduce((text, _) => {
+            text = text + '<div>' + (_.name ? `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:${colorObj[_.name]};"></span>` + _.name : '') + '</div>'
+            return text
+          }, '')}`
+        }
+      },
+      renderLabelForZeroData: false,
+      series: {
+        type: 'sunburst',
+        data: addIndex(data),
+        label: {
+          show: true,
+          rotate: 'area',
+          formatter: (params) => {
+            let { treePathInfo } = params
+            if (treePathInfo.length == 1) return ''
+            return `${params.name}\n${((treePathInfo[treePathInfo.length - 1].value / treePathInfo[treePathInfo.length - 2].value) * 100).toFixed(2)}%`
+          },
+          color: 'inherit'
+        },
+        itemStyle: {
+          borderRadius: 4,
+          borderWidth: 2
+        },
+        emphasis: {
+          focus: 'ancestor',
+          itemStyle: {
+            color: 'inherit',
+          },
+          label: {
+            color: 'inherit'
+          },
+        },
+        blur: {
+          label: {
+            color: '#fff'
+          },
+        },
+        levels: setLevels(maxlen + 1),
+      },
+
+    };
+
+    var myChart = echarts.init(document.getElementById('main'));
+    myChart.setOption(option);
+    let index = 0; let clickindex = 0
+    // myChart.on('click', function (params) {
+    //   console.log(myChart.getOption())
+    //   console.log(params)
+    //   console.log(option)
+    //   if (params.data.index) {
+    //     clickindex = params.data.index[0]
+    //     index = params.data.index.length;
+    //   } else {
+    //     if (index - 1 <= 0) {
+    //       index = 0;
+    //       clickindex = 0
+    //     } else {
+    //       index = index - 1
+    //     }
+    //   }
+    //   console.log(index, maxlen)
+    //   if (!index) {
+    //     //0
+    //     option.series.levels = setLevels(maxlen + 1)
+    //     console.log(setLevels(maxlen + 1))
+    //   } else {
+    //     option.series.levels = setLevels(maxLenArr[clickindex] - index + 2)
+    //     console.log(setLevels(maxLenArr[clickindex] - index + 2))
+    //   }
+    //   // myChart.setOption(option);
+    //   // setTimeout(() => {
+
+    //   //   myChart.setOption(option, true);
+    //   // }, 3000)
+    // });
+  </script>
+
+</body>
+
+</html>

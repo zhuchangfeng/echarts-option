@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>净资产收益率计算关系图</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.1/dist/echarts.min.js"></script>
+</head>
+
+<body>
+  <div id="main" style="width: 1200px; height: 800px;"></div>
+  <script>
+    // 指定数据
+    var data = [{
+      "name": "净资产收益率",
+      value: '10.52%',
+      "children": [
+        {
+          "name": "总资产收益率",
+          value: '0.30',
+          labelOptin: {
+            symbols: {
+              formatter: '{symbols|×}',
+              style: {
+                color: '#000',
+                align: 'right',
+                height: 0,
+                padding: [0, 0, 0, 480]
+              }
+
+            },
+          },
+
+          "children": [
+            {
+              "name": "营业净利润率",
+              value: '0.41',
+              labelOptin: {
+                symbols: {
+                  formatter: '{symbols|×}',
+                  style: {
+                    color: '#000',
+                    align: 'right',
+                    height: 0,
+                    padding: [0, 0, 0, 320]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "name": "净利润",
+                  value: '973',
+                  labelOptin: {
+                    symbols: {
+                      formatter: '{symbols|÷}',
+                      style: {
+                        color: '#000',
+                        align: 'right',
+                        height: 0,
+                      }
+                    }
+                  },
+                  "children": [
+                    {
+                      "name": "营业收入",
+                      value: '985',
+                      labelOptin: {
+                        symbols: {
+                          formatter: '{symbols|-}',
+                          style: {
+                            color: '#000',
+                            align: 'right',
+                            height: 0,
+                          }
+                        }
+                      },
+                    },
+                    {
+                      "name": "营业支出",
+                      value: '324',
+                      labelOptin: {
+                        symbols: {
+                          formatter: '{symbols|+}',
+                          style: {
+                            color: '#000',
+                            align: 'right',
+                            height: 0,
+                          }
+                        }
+                      },
+
+                    },
+                    {
+                      "name": "营业利润",
+                      value: '657',
+                      labelOptin: {
+                        symbols: {
+                          formatter: '{symbols|-}',
+                          style: {
+                            color: '#000',
+                            align: 'right',
+                            height: 0,
+                          }
+                        }
+                      },
+
+                    },
+                    {
+                      "name": "所得税",
+                      value: '345',
+                    },
+                  ]
+                },
+                {
+                  "name": "营业收入",
+                  value: '2348',
+
+                },
+              ]
+            },
+            {
+              "name": "总资产收益率",
+              value: '0.72',
+              "children": [
+                {
+                  "name": "主营业务收入",
+                  value: '976',
+                  labelOptin: {
+                    symbols: {
+                      formatter: '{symbols|÷}',
+                      style: {
+                        color: '#000',
+                        align: 'right',
+                        height: 0,
+                      }
+                    }
+                  },
+                },
+                {
+                  "name": "资产总额",
+                  value: '1354',
+                  "children": [
+                    {
+                      "name": "流动资产",
+                      value: '564',
+                    },
+                    {
+                      "name": "非流动资产",
+                      value: '790',
+
+                    },
+                  ]
+                },
+              ]
+            },
+          ]
+        },
+        {
+          "name": "权益系数",
+          value: '0.65',
+          "children": [
+            {
+              "name": "资产负债率",
+              value: '0.65',
+              labelOptin: {
+                left: {
+                  formatter: '{left|1÷(5-}',
+                  style: {
+                    color: '#000',
+                    height: 0,
+                    padding: [0, 120, 0, 0],
+                    // padding: [0, 0, 0, 220],
+                    width: 0
+                  }
+                },
+                right: {
+                  formatter: '{right|)}',
+                  style: {
+                    color: '#000',
+                    height: 0,
+                    width: 0,
+                    padding: [0, 0, 0, 100]
+                  }
+                },
+              },
+              "children": [
+                {
+                  "name": "主营业务收入",
+                  value: '976',
+                },
+                {
+                  "name": "资产总额",
+                  value: '1354',
+
+                },
+              ]
+            },
+
+          ]
+        }
+      ]
+    }]
+    let color = [{ title: '#f56c6c', bottom: '#fbc4c4' }, { title: '#409eff', bottom: '#b3d8ff' }, { title: '#409eff', bottom: '#b3d8ff' }, { title: '#67c23a', bottom: '#c2e7b0' }, { title: '#67c23a', bottom: '#c2e7b0' },];
+    // 初始化实例
+    var myChart = echarts.init(document.getElementById('main'));
+    // 递归函数,为每个节点添加索引
+    function addIndex(data, parentIndex = []) {
+      return data.map((item, index) => {
+        const currentIndex = [...parentIndex, index];
+        let newItem = { ...item, index: currentIndex };
+        if (item.children && item.children.length > 0) {
+          newItem.children = addIndex(item.children, currentIndex);
+        }
+        let colortobj = color[newItem.index.length - 1];
+        newItem = {
+          ...newItem,
+          label: {
+            show: true,
+            formatter: ['{title|{b}}', '{bottom|{c}}'].join("\n"),
+            rich: {
+              title: {
+                backgroundColor: colortobj.title,
+                width: 80,
+                height: 40
+              },
+              bottom: {
+                backgroundColor: colortobj.bottom,
+                height: 40,
+                width: 80,
+              },
+            }
+          }
+        }
+        if (newItem.labelOptin) {
+          let { symbols, left, right } = newItem.labelOptin;
+          if (symbols) {
+            newItem.label.formatter = ['{title|{b}}', symbols.formatter, '{bottom|{c}}'].join("\n");
+            newItem.label.rich = { ...newItem.label.rich, ...{ symbols: { padding: [0, 0, 0, 105], ...symbols.style } } }
+            console.log(newItem)
+          }
+          if (left && right) {
+            newItem.label.formatter = ['{title|{b}}', left.formatter, right.formatter, '{bottom|{c}}'].join("\n");
+            newItem.label.rich.left = left.style
+            newItem.label.rich.right = right.style
+          }
+        }
+        return newItem;
+      });
+    }
+
+    // 指定图表的配置项和数据
+    var option = {
+      tooltip: {
+        trigger: 'item',
+        triggerOn: 'mousemove'
+      },
+      width: 1100,
+      series: [
+        {
+          type: 'tree',
+          symbol: 'none',
+          edgeShape: "polyline",
+          data: addIndex(data),
+          symbol: 'emptyCircle',
+          roam: 'move',//scale|true|move|false
+          orient: 'vertical',
+          expandAndCollapse: false,
+          initialTreeDepth: null,
+          label: {
+            // position: 'top',
+            // verticalAlign: 'middle',
+            align: 'center',
+            fontSize: 14,
+            color: '#fff',
+            // width: 80,
+            // padding: [5, 10],
+          },
+          animationDuration: 550,
+          animationDurationUpdate: 750,
+        }
+      ],
+
+    };
+
+    // 使用刚指定的配置项和数据显示图表
+    myChart.setOption(option);
+  </script>
+</body>
+
+</html>
